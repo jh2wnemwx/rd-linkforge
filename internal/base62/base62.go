@@ -14,7 +14,21 @@ var (
 
 // Encode renders a number with no padding.
 func Encode(v uint64) string {
-	return ""
+	if v == 0 {
+		return "0"
+	}
+
+	// Max uint64 fits in 11 base62 characters
+	var s [11]byte
+
+	i := len(s)
+	for v > 0 {
+		r := v % 62
+		v /= 62
+		i--
+		s[i] = alphabet[r]
+	}
+	return string(s[i:])
 }
 
 // EncodeWidth does the same but left-pads with zeroes to at least width
