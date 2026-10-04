@@ -56,7 +56,7 @@ func Decode(s string) (uint64, error) {
 		}
 
 		// Check if v * 62 + d can fit in uint64
-		if v > (^uint64(0) - uint64(v)) / 62 {
+		if v > (^uint64(0) - uint64(d)) / 62 {
 			return 0, ErrOverflow
 		}
 		v = v * 62 + uint64(d)
