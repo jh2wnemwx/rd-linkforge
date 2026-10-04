@@ -9,7 +9,7 @@ import (
 func TestEncode(t *testing.T) {
 	tests := map[uint64]string{
 		0: "0", 9: "9", 10: "A", 35: "Z", 36: "a", 61: "z",
-		62: "10", 3843: "zz", 3844: "100", 123456: "W7E",
+		62: "10", 3843: "zz", 3844: "100", 123456: "W7E", ^uint64(0): "LygHa16AHYF",
 	}
 	for in, want := range tests {
 		if got := Encode(in); got != want {
@@ -28,7 +28,7 @@ func TestEncodeWidth(t *testing.T) {
 }
 
 func TestDecode(t *testing.T) {
-	for _, v := range []uint64{0, 1, 61, 62, 3843, 123456, 1 << 40} {
+	for _, v := range []uint64{0, 1, 61, 62, 3843, 123456, 1 << 40, ^uint64(0)} {
 		code := Encode(v)
 		got, err := Decode(code)
 		if err != nil {
@@ -50,6 +50,7 @@ func TestDecodeErrors(t *testing.T) {
 		"ab_cd":                 ErrInvalidCharacter,
 		"hello world":           ErrInvalidCharacter,
 		strings.Repeat("z", 12): ErrOverflow,
+		"LygHa16AHYG":			 ErrOverflow,
 	}
 	for in, want := range tests {
 		if _, err := Decode(in); !errors.Is(err, want) {
