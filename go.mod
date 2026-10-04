@@ -1,3 +1,3 @@
-module github.com/skskuzan/rd-linkforge
+module github.com/jh2wnemwx/rd-linkforge
 
 go 1.25
