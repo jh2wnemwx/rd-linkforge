@@ -2,6 +2,7 @@ package base62
 
 import (
 	"errors"
+	"strings"
 )
 
 const alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -34,7 +35,12 @@ func Encode(v uint64) string {
 // EncodeWidth does the same but left-pads with zeroes to at least width
 // characters. The value itself is never truncated.
 func EncodeWidth(v uint64, width int) string {
-	return ""
+	enc := Encode(v)
+	if len(enc) > width {
+		return enc
+	}
+	
+	return strings.Repeat("0", width - len(enc)) + enc
 }
 
 // Decode parses a code back into a number.
