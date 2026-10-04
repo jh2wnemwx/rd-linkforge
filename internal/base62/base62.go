@@ -39,9 +39,38 @@ func EncodeWidth(v uint64, width int) string {
 
 // Decode parses a code back into a number.
 func Decode(s string) (uint64, error) {
-	return 0, nil
+	if s == "" {
+		return 0, ErrEmpty
+	}
+
+	if len(s) > 11 {
+		return 0, ErrOverflow
+	}
+
+	var v uint64
+
+	for i := range len(s) {
+		d, ok := unbase62(s[i])
+		if !ok {
+			return 0, ErrInvalidCharacter
+		}
+
+		v = v * 62 + uint64(d)
+	}
+
+	return v, nil
 }
 
-func decodeDigit(c byte) (byte, bool) {
-	return 0, false
+func unbase62(c byte) (byte, bool) {
+	switch {
+	case '0' <= c && c <= '9':
+		return c - '0', true
+	case 'A' <= c && c <= 'Z':
+		return c - 'A' + 10, true
+	case 'a' <= c && c <= 'z':
+		return c - 'a' + 36, true
+
+	default:
+		return 0, false
+	}
 }
