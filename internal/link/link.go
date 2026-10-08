@@ -1,9 +1,10 @@
 package link
 
 import (
-	"time"
-	"net/url"
 	"errors"
+	"net/url"
+	"time"
+	"github.com/jh2wnemwx/rd-linkforge/internal/base62"
 )
 
 var (
@@ -25,7 +26,7 @@ func New(id uint64, target string) (Link, error) {
 	}
 
 	if !isValidURL(target) {
-		return Link{}, ErrEmptyTarget
+		return Link{}, ErrUnsupportedScheme
 	}
 
 	return Link {
