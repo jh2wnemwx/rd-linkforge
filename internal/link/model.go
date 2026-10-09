@@ -1,5 +1,8 @@
+//go:build ignore
+
 // Package link holds the domain model and the contracts its consumers require.
 // It may not import a transport or a storage package.
+//
 package link
 
 import "time"
