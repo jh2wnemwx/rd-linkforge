@@ -1,25 +1,25 @@
 package store
 
 import (
-	"github.com/jh2wnemwx/rd-linkforge/internal/link"
-	"errors"
-	"slices"
 	"cmp"
+	"errors"
+	"github.com/jh2wnemwx/rd-linkforge/internal/link"
+	"slices"
 )
 
 var (
-	ErrEmptyStore			= errors.New("store: empty store")
-	ErrInvalidLink			= errors.New("store: ID and Target cannot be empty")
-	ErrDuplicateID			= errors.New("store: duplicate ID")
+	ErrEmptyStore  = errors.New("store: empty store")
+	ErrInvalidLink = errors.New("store: ID and Target cannot be empty")
+	ErrDuplicateID = errors.New("store: duplicate ID")
 )
 
 type Store struct {
-    byID map[uint64]link.Link
+	byID map[uint64]link.Link
 }
 
 // an empty store
 func New() *Store {
-	return &Store {
+	return &Store{
 		byID: make(map[uint64]link.Link),
 	}
 }
@@ -49,7 +49,7 @@ func Get(s *Store, id uint64) (link.Link, bool) {
 	if id == 0 {
 		return link.Link{}, false
 	}
-	
+
 	if v, ok := s.byID[id]; ok {
 		return v, true
 	}
@@ -76,7 +76,7 @@ func All(s *Store) []link.Link {
 
 // count all elements in store
 func Count(s *Store) int {
-		if s == nil || s.byID == nil {
+	if s == nil || s.byID == nil {
 		return 0
 	}
 	return len(s.byID)
