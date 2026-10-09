@@ -29,7 +29,7 @@ func Add(s *Store, l link.Link) error {
 	if s == nil || s.byID == nil {
 		return ErrEmptyStore
 	}
-	if l.ID == 0 || l.Target == "" {
+	if l.Target == "" {
 		return ErrInvalidLink
 	}
 
@@ -44,9 +44,6 @@ func Add(s *Store, l link.Link) error {
 // second value reports whether it was found
 func Get(s *Store, id uint64) (link.Link, bool) {
 	if s == nil || s.byID == nil {
-		return link.Link{}, false
-	}
-	if id == 0 {
 		return link.Link{}, false
 	}
 
