@@ -38,7 +38,7 @@ func TestAdd(t *testing.T) {
 		"zero id": {
 			store:   New(),
 			link:    link.Link{ID: 0, Target: "https://example.com"},
-			wantErr: ErrInvalidLink,
+			wantErr: nil,
 		},
 		"empty target": {
 			store:   New(),
@@ -63,6 +63,7 @@ func TestAdd(t *testing.T) {
 func TestGet(t *testing.T) {
 	store := New()
 	_ = Add(store, link.Link{ID: 42, Code: "g", Target: "https://example.com"})
+	_ = Add(store, link.Link{ID: 0, Code: "0", Target: "https://example.com"})
 
 	tests := map[string]struct {
 		store  *Store
@@ -91,8 +92,8 @@ func TestGet(t *testing.T) {
 		"zero id lookup": {
 			store:  store,
 			id:     0,
-			want:   link.Link{},
-			wantOk: false,
+			want:   link.Link{ID: 0, Code: "0", Target: "https://example.com"},
+			wantOk: true,
 		},
 	}
 
