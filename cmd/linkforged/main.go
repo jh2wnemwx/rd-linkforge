@@ -22,11 +22,11 @@ func main() {
 
 		l, err := link.New(uint64(i), v)
 		if err != nil {
-			fmt.Printf("couldn't create link %q: %v", v, err)
+			fmt.Printf("couldn't create link %q: %v\n", v, err)
 		}
 
 		if err := store.Add(s, l); err != nil {
-			fmt.Printf("couldn't add link %q to store: %v", l, err)
+			fmt.Printf("couldn't add link %q to store: %v\n", l.Target, err)
 		}
 	}
 
