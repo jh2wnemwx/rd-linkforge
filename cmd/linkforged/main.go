@@ -3,9 +3,11 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
+	"os"
+
 	"github.com/jh2wnemwx/rd-linkforge/internal/link"
 	"github.com/jh2wnemwx/rd-linkforge/internal/store"
-	"os"
 )
 
 // version is overwritten at build time with -ldflags "-X main.version=...".
@@ -15,6 +17,7 @@ func main() {
 	args := os.Args[1:]
 	s := store.New()
 
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	for i, v := range args {
 		if v == "" {
 			continue
@@ -22,11 +25,11 @@ func main() {
 
 		l, err := link.New(uint64(i), v)
 		if err != nil {
-			fmt.Printf("couldn't create link %q: %v\n", v, err)
+			logger.Error("couldn't create link", "link", v, "err", err)
 		}
 
 		if err := store.Add(s, l); err != nil {
-			fmt.Printf("couldn't add link %q to store: %v\n", l.Target, err)
+			logger.Error("couldn't add link to store", "link", l.Target, "store", s, "err", err)
 		}
 	}
 
