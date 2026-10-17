@@ -1,20 +1,26 @@
-//go:build ignore
-
 // Package link holds the domain model and the contracts its consumers require.
 // It may not import a transport or a storage package.
 //
 package link
 
-import "time"
+import (
+	"errors"
+	"github.com/jh2wnemwx/rd-linkforge/internal/base62"
+	"net/url"
+	"time"
+)
+
+var (
+	ErrEmptyTarget       = errors.New("link: empty target")
+	ErrUnsupportedScheme = errors.New("link: unsupported scheme")
+)
 
 // Link is a shortened URL. A zero ExpiresAt means it never expires.
 type Link struct {
-	ID        int64
+	ID        uint64
 	Code      string
-	TargetURL string
-	OwnerID   string
+	Target    string
 	CreatedAt time.Time
-	ExpiresAt time.Time
 }
 
 // ShortenRequest carries everything needed to create a link. An empty Alias
@@ -30,4 +36,31 @@ type ShortenRequest struct {
 type Page struct {
 	Cursor string
 	Limit  int
+}
+
+
+// New builds a link, validating the target address.
+func New(id uint64, target string) (Link, error) {
+	if target == "" {
+		return Link{}, ErrEmptyTarget
+	}
+
+	if !isValidURL(target) {
+		return Link{}, ErrUnsupportedScheme
+	}
+
+	return Link{
+		ID:        id,
+		Code:      base62.EncodeWidth(id, 6),
+		Target:    target,
+		CreatedAt: time.Now().UTC(),
+	}, nil
+}
+
+func isValidURL(s string) bool {
+	u, err := url.ParseRequestURI(s)
+	if err != nil {
+		return false
+	}
+	return (u.Scheme == "http" || u.Scheme == "https") && u.Host != ""
 }
