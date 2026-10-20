@@ -32,6 +32,19 @@ func Encode(v uint64) string {
 	return string(s[i:])
 }
 
+// EncodeRecursive returns same result as Encode
+func EncodeRecursive(v uint64) string {
+	if v == 0 {
+		return "0"
+	}
+
+	if v < 62 {
+		return string(alphabet[v])
+	}
+
+	return EncodeRecursive(v/62) + string(alphabet[v%62])
+}
+
 // EncodeWidth does the same but left-pads with zeroes to at least width
 // characters. The value itself is never truncated.
 func EncodeWidth(v uint64, width int) string {
