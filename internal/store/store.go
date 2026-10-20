@@ -2,9 +2,11 @@ package store
 
 import (
 	"cmp"
+	"context"
 	"errors"
-	"github.com/jh2wnemwx/rd-linkforge/internal/link"
 	"slices"
+
+	"github.com/jh2wnemwx/rd-linkforge/internal/link"
 )
 
 var (
@@ -14,13 +16,15 @@ var (
 )
 
 type Store struct {
-	byID map[uint64]link.Link
+	byID   map[uint64]link.Link
+	byCode map[string]uint64
 }
 
 // an empty store
 func New() *Store {
 	return &Store{
-		byID: make(map[uint64]link.Link),
+		byID:   make(map[uint64]link.Link),
+		byCode: make(map[string]uint64),
 	}
 }
 
@@ -39,6 +43,26 @@ func Add(s *Store, l link.Link) error {
 
 	s.byID[l.ID] = l
 	return nil
+}
+
+// ErrDuplicateID if the id is taken
+func (s *Store) Create(ctx context.Context, l link.Link) (link.Link, error) {
+	if _, ok := s.byID[l.ID]; ok {
+		return link.Link{}, ErrDuplicateID
+	}
+	if _, err := s.ByCode(ctx, l.Code); err == nil {
+		return link.Link{}, link.ErrAliasTaken
+	}
+
+	return l, nil
+}
+
+func (s *Store) ByCode(ctx context.Context, code string) (link.Link, error) {
+	if id, ok := s.byCode[code]; ok {
+		return link.Link{}, link.ErrNotFound
+	} else {
+		return s.byID[id], nil
+	}
 }
 
 // second value reports whether it was found
