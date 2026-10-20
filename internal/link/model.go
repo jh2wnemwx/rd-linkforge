@@ -1,6 +1,5 @@
 // Package link holds the domain model and the contracts its consumers require.
 // It may not import a transport or a storage package.
-//
 package link
 
 import (
@@ -13,7 +12,24 @@ import (
 var (
 	ErrEmptyTarget       = errors.New("link: empty target")
 	ErrUnsupportedScheme = errors.New("link: unsupported scheme")
+	ErrNotFound          = errors.New("link: not found")
+	ErrAliasTaken        = errors.New("link: alias already taken")
+	ErrInvalidAlias      = errors.New("link: invalid alias")
+	ErrReservedAlias     = errors.New("link: reserved alias")
+	ErrForbidden         = errors.New("link: forbidden")
+	ErrExpired           = errors.New("link: expired")
+	ErrInvalidExpiry     = errors.New("link: invalid expiry")
+	ErrEmptyOwner        = errors.New("link: owner is required")
+	ErrInvalidCursor     = errors.New("link: invalid cursor")
 )
+
+type AliasError struct {
+    Alias string
+    Err   error
+}
+
+func (e *AliasError) Error() string // the message mentions the alias
+func (e *AliasError) Unwrap() error // returns e.Err
 
 // Link is a shortened URL. A zero ExpiresAt means it never expires.
 type Link struct {
@@ -21,15 +37,15 @@ type Link struct {
 	Code      string
 	Target    string
 	OwnerID   string
-    CreatedAt time.Time
-    ExpiresAt time.Time // the zero value means: never expires
+	CreatedAt time.Time
+	ExpiresAt time.Time // the zero value means: never expires
 
 }
 
 // ShortenRequest carries everything needed to create a link. An empty Alias
 // asks for a generated code.
 type ShortenRequest struct {
-	Target string
+	Target    string
 	Alias     string
 	OwnerID   string
 	ExpiresAt time.Time
@@ -40,7 +56,6 @@ type Page struct {
 	Cursor string
 	Limit  int
 }
-
 
 // New builds a link, validating the target address.
 func New(id uint64, target string) (Link, error) {
