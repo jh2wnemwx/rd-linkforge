@@ -2,9 +2,11 @@ package store
 
 import (
 	"cmp"
+	"context"
 	"errors"
-	"github.com/jh2wnemwx/rd-linkforge/internal/link"
 	"slices"
+
+	"github.com/jh2wnemwx/rd-linkforge/internal/link"
 )
 
 var (
@@ -14,13 +16,15 @@ var (
 )
 
 type Store struct {
-	byID map[uint64]link.Link
+	byID   map[uint64]link.Link
+	byCode map[string]uint64
 }
 
 // an empty store
 func New() *Store {
 	return &Store{
-		byID: make(map[uint64]link.Link),
+		byID:   make(map[uint64]link.Link),
+		byCode: make(map[string]uint64),
 	}
 }
 
