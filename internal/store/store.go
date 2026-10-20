@@ -45,6 +45,14 @@ func Add(s *Store, l link.Link) error {
 	return nil
 }
 
+func (s *Store) ByCode(ctx context.Context, code string) (link.Link, error) {
+	if id, ok := s.byCode[code]; ok {
+		return link.Link{}, link.ErrNotFound
+	} else {
+		return s.byID[id], nil
+	}
+}
+
 // second value reports whether it was found
 func Get(s *Store, id uint64) (link.Link, bool) {
 	if s == nil || s.byID == nil {
