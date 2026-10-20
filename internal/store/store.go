@@ -45,6 +45,18 @@ func Add(s *Store, l link.Link) error {
 	return nil
 }
 
+// ErrDuplicateID if the id is taken
+func (s *Store) Create(ctx context.Context, l link.Link) (link.Link, error) {
+	if _, ok := s.byID[l.ID]; ok {
+		return link.Link{}, ErrDuplicateID
+	}
+	if _, err := s.ByCode(ctx, l.Code); err == nil {
+		return link.Link{}, link.ErrAliasTaken
+	}
+
+	return l, nil
+}
+
 func (s *Store) ByCode(ctx context.Context, code string) (link.Link, error) {
 	if id, ok := s.byCode[code]; ok {
 		return link.Link{}, link.ErrNotFound
