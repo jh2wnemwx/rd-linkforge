@@ -4,9 +4,11 @@ package link
 
 import (
 	"errors"
-	"github.com/jh2wnemwx/rd-linkforge/internal/base62"
+	"fmt"
 	"net/url"
 	"time"
+
+	"github.com/jh2wnemwx/rd-linkforge/internal/base62"
 )
 
 var (
@@ -24,12 +26,17 @@ var (
 )
 
 type AliasError struct {
-    Alias string
-    Err   error
+	Alias string
+	Err   error
 }
 
-func (e *AliasError) Error() string // the message mentions the alias
-func (e *AliasError) Unwrap() error // returns e.Err
+func (e *AliasError) Error() string {
+	return fmt.Sprintf("alias %q failed: %v", e.Alias, e.Err)
+}
+
+func (e *AliasError) Unwrap() error {
+	return e.Err
+}
 
 // Link is a shortened URL. A zero ExpiresAt means it never expires.
 type Link struct {
