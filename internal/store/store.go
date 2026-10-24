@@ -65,6 +65,16 @@ func (s *Store) ByCode(ctx context.Context, code string) (link.Link, error) {
 	}
 }
 
+func (s *Store) ListByOwner(ctx context.Context, ownerID string, page link.Page) ([]link.Link, error)
+
+func (s *Store) Delete(ctx context.Context, id uint64) error
+
+func (s *Store) Count() int
+
+func (s *Store) Get(id uint64) (link.Link, bool)
+
+func (s *Store) All() []link.Link
+
 // second value reports whether it was found
 func Get(s *Store, id uint64) (link.Link, bool) {
 	if s == nil || s.byID == nil {
