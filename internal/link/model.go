@@ -64,6 +64,10 @@ type Page struct {
 	Limit  int
 }
 
+func (p Page) Normalize() Page
+
+func (p Page) AfterID() (uint64, error)
+
 // New builds a link, validating the target address.
 func New(id uint64, target string) (Link, error) {
 	if target == "" {
