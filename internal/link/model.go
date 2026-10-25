@@ -25,6 +25,11 @@ var (
 	ErrInvalidCursor     = errors.New("link: invalid cursor")
 )
 
+const (
+	DefaultPageLimit = 20
+	MaxPageLimit     = 100
+)
+
 type AliasError struct {
 	Alias string
 	Err   error
