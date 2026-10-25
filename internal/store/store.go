@@ -105,16 +105,23 @@ func All(s *Store) []link.Link {
 	if s == nil || s.byID == nil {
 		return nil
 	}
+
 	links := make([]link.Link, 0, len(s.byID))
+	
 	for _, v := range s.byID {
 		links = append(links, v)
 	}
 
+	sortByID(links)
+
+	return links
+}
+
+func sortByID(links []link.Link) {
 	slices.SortFunc(links, func(a, b link.Link) int {
 		return cmp.Compare(a.ID, b.ID)
 	})
 
-	return links
 }
 
 // count all elements in store
