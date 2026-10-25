@@ -107,7 +107,7 @@ func All(s *Store) []link.Link {
 	}
 
 	links := make([]link.Link, 0, len(s.byID))
-	
+
 	for _, v := range s.byID {
 		links = append(links, v)
 	}
