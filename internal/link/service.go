@@ -40,7 +40,7 @@ func NewService(store Store, opts ...Option) *Service {
 func (s *Service) Shorten(ctx context.Context, req ShortenRequest) (Link, error) {
 	maxAttempts := 3
 
-	for i := 0; i < maxAttempts; i++ {
+	for range maxAttempts {
 		id := s.nextID
 
 		if req.OwnerID == "" {
