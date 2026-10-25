@@ -59,7 +59,11 @@ func (s *Service) Shorten(ctx context.Context, req ShortenRequest) (Link, error)
 			}
 		}
 
-		
+		l.OwnerID, l.ExpiresAt = req.OwnerID, req.ExpiresAt
+		if req.Alias != "" {
+			l.Code = req.Alias
+		}
+
 		link, err := s.store.Create(ctx, l)
 
 		if err != nil {
