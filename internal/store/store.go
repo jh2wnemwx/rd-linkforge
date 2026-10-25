@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"time"
 
 	"github.com/jh2wnemwx/rd-linkforge/internal/link"
 )
@@ -60,11 +61,21 @@ func (s *Store) Create(ctx context.Context, l link.Link) (link.Link, error) {
 }
 
 func (s *Store) ByCode(ctx context.Context, code string) (link.Link, error) {
-	if id, ok := s.byCode[code]; !ok {
+	id, ok := s.byCode[code]
+	if !ok {
 		return link.Link{}, link.ErrNotFound
-	} else {
-		return s.byID[id], nil
 	}
+	
+	l, ok := s.byID[id]
+	if !ok {
+		return link.Link{}, errors.New("store: no matches for resolved id")
+	}
+	
+	if !l.ExpiresAt.IsZero() && !l.ExpiresAt.After(time.Now()) {
+		return link.Link{}, link.ErrExpired
+	}
+
+	return s.byID[id], nil
 }
 
 func (s *Store) ListByOwner(ctx context.Context, ownerID string, page link.Page) ([]link.Link, error)
