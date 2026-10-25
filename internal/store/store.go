@@ -71,10 +71,6 @@ func (s *Store) ByCode(ctx context.Context, code string) (link.Link, error) {
 		return link.Link{}, errors.New("store: no matches for resolved id")
 	}
 
-	if !l.ExpiresAt.IsZero() && !l.ExpiresAt.After(time.Now()) {
-		return link.Link{}, link.ErrExpired
-	}
-
 	return l, nil
 }
 
