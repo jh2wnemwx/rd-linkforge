@@ -112,7 +112,13 @@ func validateAlias(s string) error {
 	return nil
 }
 
-func (s *Service) Resolve(ctx context.Context, code string) (Link, error) { return Link{}, nil }
+func (s *Service) Resolve(ctx context.Context, code string) (Link, error) {
+	if code == "" {
+		return Link{}, errors.New("link: empty code")
+	}
+
+	return s.store.ByCode(ctx, code)
+}
 
 func (s *Service) List(ctx context.Context, ownerID string, page Page) ([]Link, error) { return nil, nil }
 
