@@ -81,7 +81,19 @@ func (p Page) Normalize() Page {
 	return p
 }
 
-func (p Page) AfterID() (uint64, error)
+func (p Page) AfterID() (uint64, error) {
+	if p.Cursor == "" {
+		return 0, nil
+	}
+
+	id, err := base62.Decode(p.Cursor)
+
+	if err != nil {
+		return 0, fmt.Errorf("failed to decode cursor %q: %w", err, ErrInvalidCursor)
+	}
+
+	return id, nil
+}
 
 // New builds a link, validating the target address.
 func New(id uint64, target string) (Link, error) {
