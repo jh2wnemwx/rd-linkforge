@@ -40,32 +40,32 @@ func NewService(store Store, opts ...Option) *Service {
 }
 
 func (s *Service) Shorten(ctx context.Context, req ShortenRequest) (Link, error) {
+	id := s.nextID
+
+	if req.OwnerID == "" {
+		return Link{}, ErrEmptyOwner
+	}
+	l, err := New(id, req.Target)
+	if err != nil {
+		return l, err
+	}
+	if !req.ExpiresAt.IsZero() && !req.ExpiresAt.After(time.Now()) {
+		return Link{}, ErrInvalidExpiry
+	}
+	if req.Alias != "" {
+		if err := validateAlias(req.Alias); err != nil {
+			return Link{}, &AliasError{req.Alias, err}
+		}
+	}
+
+	l.OwnerID, l.ExpiresAt = req.OwnerID, req.ExpiresAt
+	if req.Alias != "" {
+		l.Code = req.Alias
+	}
+
 	maxAttempts := 3
 
 	for range maxAttempts {
-		id := s.nextID
-
-		if req.OwnerID == "" {
-			return Link{}, ErrEmptyOwner
-		}
-		l, err := New(id, req.Target)
-		if err != nil {
-			return l, err
-		}
-		if !req.ExpiresAt.IsZero() && !req.ExpiresAt.After(time.Now()) {
-			return Link{}, ErrInvalidExpiry
-		}
-		if req.Alias != "" {
-			if err := validateAlias(req.Alias); err != nil {
-				return Link{}, &AliasError{req.Alias, err}
-			}
-		}
-
-		l.OwnerID, l.ExpiresAt = req.OwnerID, req.ExpiresAt
-		if req.Alias != "" {
-			l.Code = req.Alias
-		}
-
 		link, err := s.store.Create(ctx, l)
 
 		if err != nil {
