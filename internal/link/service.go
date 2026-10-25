@@ -82,7 +82,7 @@ func (s *Service) Shorten(ctx context.Context, req ShortenRequest) (Link, error)
 		s.nextID++
 		return link, nil
 	}
-	
+
 	return Link{}, &AliasError{req.Alias, ErrAliasTaken}
 }
 
@@ -106,8 +106,8 @@ func validateAlias(s string) error {
 		"metrics",
 		"admin",
 	}, strings.ToLower(s)) {
-			return ErrReservedAlias
-		}
+		return ErrReservedAlias
+	}
 
 	return nil
 }
