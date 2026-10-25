@@ -87,6 +87,10 @@ func (s *Service) Shorten(ctx context.Context, req ShortenRequest) (Link, error)
 }
 
 func validateAlias(s string) error {
+	if len(s) < 3 || len(s) > 32 {
+		return ErrInvalidAlias
+	}
+
 	for _, v := range s {
 		isLower := 'a' <= v && v <= 'z'
 		isUpper := 'A' <= v && v <= 'Z'
