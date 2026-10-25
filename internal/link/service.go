@@ -41,6 +41,7 @@ func NewService(store Store, opts ...Option) *Service {
 
 func (s *Service) Shorten(ctx context.Context, req ShortenRequest) (Link, error) {
 	id := s.nextID
+	now := s.clock()
 
 	if req.OwnerID == "" {
 		return Link{}, ErrEmptyOwner
@@ -49,7 +50,7 @@ func (s *Service) Shorten(ctx context.Context, req ShortenRequest) (Link, error)
 	if err != nil {
 		return l, err
 	}
-	if !req.ExpiresAt.IsZero() && !req.ExpiresAt.After(time.Now()) {
+	if !req.ExpiresAt.IsZero() && !req.ExpiresAt.After(now) {
 		return Link{}, ErrInvalidExpiry
 	}
 	if req.Alias != "" {
@@ -58,7 +59,7 @@ func (s *Service) Shorten(ctx context.Context, req ShortenRequest) (Link, error)
 		}
 	}
 
-	l.OwnerID, l.ExpiresAt = req.OwnerID, req.ExpiresAt
+	l.OwnerID, l.ExpiresAt, l.CreatedAt = req.OwnerID, req.ExpiresAt, now.UTC()
 	if req.Alias != "" {
 		l.Code = req.Alias
 	}
