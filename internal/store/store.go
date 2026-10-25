@@ -65,17 +65,17 @@ func (s *Store) ByCode(ctx context.Context, code string) (link.Link, error) {
 	if !ok {
 		return link.Link{}, link.ErrNotFound
 	}
-	
+
 	l, ok := s.byID[id]
 	if !ok {
 		return link.Link{}, errors.New("store: no matches for resolved id")
 	}
-	
+
 	if !l.ExpiresAt.IsZero() && !l.ExpiresAt.After(time.Now()) {
 		return link.Link{}, link.ErrExpired
 	}
 
-	return s.byID[id], nil
+	return l, nil
 }
 
 func (s *Store) ListByOwner(ctx context.Context, ownerID string, page link.Page) ([]link.Link, error)
