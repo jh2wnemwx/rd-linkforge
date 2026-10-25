@@ -71,7 +71,7 @@ type Page struct {
 
 func (p Page) Normalize() Page {
 	if p.Limit <= 0 {
-		p.Limit = 1
+		p.Limit = DefaultPageLimit
 	}
 
 	if p.Limit > MaxPageLimit {
