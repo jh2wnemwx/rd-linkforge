@@ -25,9 +25,9 @@ func WithClock(now func() time.Time) Option {
 
 func NewService(store Store, opts ...Option) *Service {
 	s := &Service{
-		store: store,
+		store:  store,
 		nextID: 1,
-		clock: time.Now,
+		clock:  time.Now,
 	}
 
 	for _, opt := range opts {
