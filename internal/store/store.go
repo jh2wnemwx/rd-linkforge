@@ -54,6 +54,8 @@ func (s *Store) Create(ctx context.Context, l link.Link) (link.Link, error) {
 		return link.Link{}, link.ErrAliasTaken
 	}
 
+	s.byID[l.ID] = l
+	s.byCode[l.Code] = l.ID
 	return l, nil
 }
 
