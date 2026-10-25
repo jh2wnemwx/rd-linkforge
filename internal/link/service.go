@@ -121,7 +121,7 @@ func (s *Service) Resolve(ctx context.Context, code string) (Link, error) {
 	l, err := s.store.ByCode(ctx, code)
 
 	if err != nil {
-		return Link{}, fmt.Errorf("failed to resolve %q:", code, err)
+		return Link{}, fmt.Errorf("failed to resolve %q:, %w", code, err)
 	}
 
 	if !l.ExpiresAt.IsZero() && !l.ExpiresAt.After(time.Now()) {
