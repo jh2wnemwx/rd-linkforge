@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
+	"strings"
 	"time"
 )
 
@@ -96,18 +98,16 @@ func validateAlias(s string) error {
 		}
 	}
 
-	for _, word := range []string{
+	if slices.Contains([]string{
 		"api",
 		"ws",
 		"healthz",
 		"readyz",
 		"metrics",
 		"admin",
-	} {
-		if s == word {
+	}, strings.ToLower(s)) {
 			return ErrReservedAlias
 		}
-	}
 
 	return nil
 }
