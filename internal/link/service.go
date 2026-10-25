@@ -118,7 +118,17 @@ func validateAlias(s string) error {
 }
 
 func (s *Service) Resolve(ctx context.Context, code string) (Link, error) {
-	return s.store.ByCode(ctx, code)
+	l, err := s.store.ByCode(ctx, code)
+
+	if err != nil {
+		return Link{}, fmt.Errorf("failed to resolve %q:", code, err)
+	}
+
+	if !l.ExpiresAt.IsZero() && !l.ExpiresAt.After(time.Now()) {
+		return Link{}, ErrExpired
+	}
+
+	return l, nil
 }
 
 func (s *Service) List(ctx context.Context, ownerID string, page Page) ([]Link, error) {
