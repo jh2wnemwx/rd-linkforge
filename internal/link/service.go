@@ -107,3 +107,9 @@ func validateAlias(s string) error {
 
 	return nil
 }
+
+func (s *Service) Resolve(ctx context.Context, code string) (Link, error) { return Link{}, nil }
+
+func (s *Service) List(ctx context.Context, ownerID string, page Page) ([]Link, error) { return nil, nil }
+
+func (s *Service) Delete(ctx context.Context, ownerID string, code string) error { return nil }
