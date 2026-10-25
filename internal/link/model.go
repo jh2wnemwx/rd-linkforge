@@ -69,7 +69,17 @@ type Page struct {
 	Limit  int
 }
 
-func (p Page) Normalize() Page
+func (p Page) Normalize() Page {
+	if p.Limit <= 0 {
+		p.Limit = 1
+	}
+
+	if p.Limit > MaxPageLimit {
+		p.Limit = MaxPageLimit
+	}
+
+	return p
+}
 
 func (p Page) AfterID() (uint64, error)
 
