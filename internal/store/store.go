@@ -16,15 +16,17 @@ var (
 )
 
 type Store struct {
-	byID   map[uint64]link.Link
-	byCode map[string]uint64
+	byID    map[uint64]link.Link
+	byCode  map[string]uint64
+	byOwner map[string][]uint64
 }
 
 // an empty store
 func New() *Store {
 	return &Store{
-		byID:   make(map[uint64]link.Link),
-		byCode: make(map[string]uint64),
+		byID:    make(map[uint64]link.Link),
+		byCode:  make(map[string]uint64),
+		byOwner: make(map[string][]uint64),
 	}
 }
 
@@ -56,6 +58,8 @@ func (s *Store) Create(ctx context.Context, l link.Link) (link.Link, error) {
 
 	s.byID[l.ID] = l
 	s.byCode[l.Code] = l.ID
+	s.byOwner[l.OwnerID] = append(s.byOwner[l.OwnerID], l.ID)
+
 	return l, nil
 }
 
