@@ -60,7 +60,7 @@ func (s *Store) Create(ctx context.Context, l link.Link) (link.Link, error) {
 }
 
 func (s *Store) ByCode(ctx context.Context, code string) (link.Link, error) {
-	if id, ok := s.byCode[code]; ok {
+	if id, ok := s.byCode[code]; !ok {
 		return link.Link{}, link.ErrNotFound
 	} else {
 		return s.byID[id], nil
