@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 
 	"github.com/jh2wnemwx/rd-linkforge/internal/link"
@@ -79,7 +80,44 @@ func (s *Store) ByCode(ctx context.Context, code string) (link.Link, error) {
 	return l, nil
 }
 
-func (s *Store) ListByOwner(ctx context.Context, ownerID string, page link.Page) ([]link.Link, error)
+func (s *Store) ListByOwner(ctx context.Context, ownerID string, page link.Page) ([]link.Link, error) {
+	p := page.Normalize()
+
+	ids, exists := s.byOwner[ownerID]
+	if !exists {
+		return nil, nil
+	}
+
+	afterID, err := p.AfterID()
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode cursor %q:, %w", p.Cursor, err)
+	}
+
+	start := 0
+	if afterID > 0 {
+		// Since IDs are monotonically increasing and cannot be reused,
+		// the slice is already sorted by ID ascending, allowing us to use binary search
+		start, _ = slices.BinarySearch(ids, afterID)
+	}
+
+	var links []link.Link
+
+	for _, id := range ids[start:] {
+		if len(links) >= p.Limit {
+			break
+		}
+
+		l, ok := s.byID[id]
+		if !ok {
+			continue // Skip tombstones
+		}
+		links = append(links, l)
+	}
+
+	// Extra sort is not strictly necessary, but is enforced by HW-2 requirements
+	sortByID(links)
+	return links, nil
+}
 
 func (s *Store) Delete(ctx context.Context, id uint64) error
 
