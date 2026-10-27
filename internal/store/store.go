@@ -14,7 +14,6 @@ var (
 	ErrEmptyStore  = errors.New("store: empty store")
 	ErrInvalidLink = errors.New("store: ID and Target cannot be empty")
 	ErrDuplicateID = errors.New("store: duplicate ID")
-	ErrMissingID   = errors.New("store: ID not found")
 )
 
 type Store struct {
@@ -74,7 +73,7 @@ func (s *Store) ByCode(ctx context.Context, code string) (link.Link, error) {
 	l, ok := s.byID[id]
 	// Handle tombstones gracefully
 	if !ok {
-		return link.Link{}, ErrMissingID
+		return link.Link{}, link.ErrNotFound
 	}
 
 	return l, nil
