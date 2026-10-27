@@ -118,7 +118,16 @@ func (s *Store) ListByOwner(ctx context.Context, ownerID string, page link.Page)
 	return links, nil
 }
 
-func (s *Store) Delete(ctx context.Context, id uint64) error
+func (s *Store) Delete(ctx context.Context, id uint64) error {
+	_, ok := s.byID[id]
+	if !ok {
+		return link.ErrNotFound
+	}
+
+	delete(s.byID, id)
+
+	return nil
+}
 
 func (s *Store) Get(id uint64) (link.Link, bool) {
 	if s == nil || s.byID == nil {
