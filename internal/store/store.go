@@ -22,6 +22,8 @@ type Store struct {
 	byOwner map[string][]uint64
 }
 
+var _ link.Store = (*Store)(nil)
+
 // an empty store
 func New() *Store {
 	return &Store{
