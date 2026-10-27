@@ -121,14 +121,7 @@ func (s *Store) ListByOwner(ctx context.Context, ownerID string, page link.Page)
 
 func (s *Store) Delete(ctx context.Context, id uint64) error
 
-func (s *Store) Count() int
-
-func (s *Store) Get(id uint64) (link.Link, bool)
-
-func (s *Store) All() []link.Link
-
-// second value reports whether it was found
-func Get(s *Store, id uint64) (link.Link, bool) {
+func (s *Store) Get(id uint64) (link.Link, bool) {
 	if s == nil || s.byID == nil {
 		return link.Link{}, false
 	}
@@ -141,7 +134,7 @@ func Get(s *Store, id uint64) (link.Link, bool) {
 }
 
 // sorted by ID ascending
-func All(s *Store) []link.Link {
+func (s *Store) All() []link.Link {
 	if s == nil || s.byID == nil {
 		return nil
 	}
@@ -165,7 +158,7 @@ func sortByID(links []link.Link) {
 }
 
 // count all elements in store
-func Count(s *Store) int {
+func (s *Store) Count() int {
 	if s == nil || s.byID == nil {
 		return 0
 	}
