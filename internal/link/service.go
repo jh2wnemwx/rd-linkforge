@@ -139,4 +139,27 @@ func (s *Service) List(ctx context.Context, ownerID string, page Page) ([]Link, 
 	return s.store.ListByOwner(ctx, ownerID, page)
 }
 
-func (s *Service) Delete(ctx context.Context, ownerID string, code string) error { return nil }
+func (s *Service) Delete(ctx context.Context, ownerID string, code string) error {
+	if ownerID == "" {
+		return ErrEmptyOwner
+	}
+
+	l, err := s.store.ByCode(ctx, code)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			return err
+		} else {
+			return fmt.Errorf("unexpected store error: %w", err)
+		}
+	}
+
+	if l.OwnerID != ownerID {
+		return ErrForbidden
+	}
+
+	if err := s.store.Delete(ctx, l.ID); err != nil {
+		return err
+	}
+
+	return nil
+}
