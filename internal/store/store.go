@@ -99,6 +99,7 @@ func (s *Store) ListByOwner(ctx context.Context, ownerID string, page link.Page)
 		// Since IDs are monotonically increasing and cannot be reused,
 		// the slice is already sorted by ID ascending, allowing us to use binary search
 		start, _ = slices.BinarySearch(ids, afterID)
+		start += 1
 	}
 
 	var links []link.Link
