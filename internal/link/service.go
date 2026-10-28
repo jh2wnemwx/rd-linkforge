@@ -136,7 +136,7 @@ func (s *Service) List(ctx context.Context, ownerID string, page Page) ([]Link, 
 		return nil, ErrEmptyOwner
 	}
 
-	return nil, nil
+	return s.store.ListByOwner(ctx, ownerID, page)
 }
 
 func (s *Service) Delete(ctx context.Context, ownerID string, code string) error { return nil }
