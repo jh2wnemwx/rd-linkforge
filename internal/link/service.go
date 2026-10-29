@@ -125,13 +125,14 @@ func validateAlias(s string) error {
 }
 
 func (s *Service) Resolve(ctx context.Context, code string) (Link, error) {
+	now := s.clock()
 	l, err := s.store.ByCode(ctx, code)
 
 	if err != nil {
 		return Link{}, fmt.Errorf("failed to resolve %q:, %w", code, err)
 	}
 
-	if !l.ExpiresAt.IsZero() && !l.ExpiresAt.After(time.Now()) {
+	if !l.ExpiresAt.IsZero() && !l.ExpiresAt.After(now) {
 		return Link{}, ErrExpired
 	}
 
