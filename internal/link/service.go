@@ -7,6 +7,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/jh2wnemwx/rd-linkforge/internal/base62"
 )
 
 type Service struct {
@@ -40,13 +42,12 @@ func NewService(store Store, opts ...Option) *Service {
 }
 
 func (s *Service) Shorten(ctx context.Context, req ShortenRequest) (Link, error) {
-	id := s.nextID
 	now := s.clock()
 
 	if req.OwnerID == "" {
 		return Link{}, ErrEmptyOwner
 	}
-	l, err := New(id, req.Target)
+	l, err := New(s.nextID, req.Target)
 	if err != nil {
 		return l, err
 	}
@@ -59,16 +60,20 @@ func (s *Service) Shorten(ctx context.Context, req ShortenRequest) (Link, error)
 		}
 	}
 
-	l.OwnerID, l.ExpiresAt, l.CreatedAt = req.OwnerID, req.ExpiresAt, now.UTC()
+	l.OwnerID = req.OwnerID
+	l.ExpiresAt = req.ExpiresAt
+	l.CreatedAt = now.UTC()
+
 	if req.Alias != "" {
 		l.Code = req.Alias
+	} else {
+		l.Code = base62.EncodeWidth(s.nextID, 6)
 	}
 
 	maxAttempts := 3
 
 	for range maxAttempts {
 		link, err := s.store.Create(ctx, l)
-
 		if err != nil {
 			if !errors.Is(err, ErrAliasTaken) {
 				return Link{}, fmt.Errorf("unexpected store error: %w", err)
@@ -76,6 +81,8 @@ func (s *Service) Shorten(ctx context.Context, req ShortenRequest) (Link, error)
 				return Link{}, &AliasError{req.Alias, err}
 			} else {
 				s.nextID++
+				l.ID = s.nextID
+				l.Code = base62.EncodeWidth(s.nextID, 6)
 				continue
 			}
 		}
