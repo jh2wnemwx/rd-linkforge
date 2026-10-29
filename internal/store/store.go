@@ -82,8 +82,6 @@ func (s *Store) ByCode(ctx context.Context, code string) (link.Link, error) {
 }
 
 func (s *Store) ListByOwner(ctx context.Context, ownerID string, page link.Page) ([]link.Link, error) {
-	p := page.Normalize()
-
 	ids, exists := s.byOwner[ownerID]
 	if !exists {
 		return nil, nil
