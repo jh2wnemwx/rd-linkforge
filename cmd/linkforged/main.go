@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
@@ -15,27 +16,37 @@ import (
 
 func main() {
 	args := os.Args[1:]
-	s := store.New()
+	ctx := context.Background()
+	owner := "demo"
 
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	for i, v := range args {
+	s := store.New()
+	svc := link.NewService(s)
+
+	logger := slog.New(slog.NewJSONHandler(os.Stderr, nil))
+	for _, v := range args {
 		if v == "" {
 			continue
 		}
 
-		l, err := link.New(uint64(i), v)
-		if err != nil {
-			logger.Error("couldn't create link", "link", v, "err", err)
+		req := link.ShortenRequest{
+			Target:  v,
+			OwnerID: owner,
 		}
 
-		if err := store.Add(s, l); err != nil {
-			logger.Error("couldn't add link to store", "link", l.Target, "store", s, "err", err)
+		_, err := svc.Shorten(ctx, req)
+		if err != nil {
+			logger.Error("couldn't shorten", "ShortenRequest", req, "err", err)
 		}
 	}
 
-	for _, v := range store.All(s) {
+	links, err := svc.List(ctx, owner, link.Page{})
+	if err != nil {
+		logger.Error("couldn't list", "owner", owner, "err", err)
+	}
+
+	for _, v := range links {
 		fmt.Printf("%v\t%v\n", v.Code, v.Target)
 	}
-	fmt.Println("\nTotal:", store.Count(s))
-	// fmt.Printf("linkforged %s\n", version)
+
+	fmt.Println("\nTotal:", s.Count())
 }
