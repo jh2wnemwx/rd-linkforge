@@ -87,9 +87,9 @@ func (s *Store) ListByOwner(ctx context.Context, ownerID string, page link.Page)
 		return nil, nil
 	}
 
-	afterID, err := p.AfterID()
+	afterID, err := page.AfterID()
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode cursor %q:, %w", p.Cursor, err)
+		return nil, fmt.Errorf("failed to decode cursor %q:, %w", page.Cursor, err)
 	}
 
 	start := 0
@@ -103,7 +103,7 @@ func (s *Store) ListByOwner(ctx context.Context, ownerID string, page link.Page)
 	var links []link.Link
 
 	for _, id := range ids[start:] {
-		if len(links) >= p.Limit {
+		if len(links) >= page.Limit {
 			break
 		}
 
