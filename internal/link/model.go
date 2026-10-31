@@ -1,32 +1,63 @@
 // Package link holds the domain model and the contracts its consumers require.
 // It may not import a transport or a storage package.
-//
 package link
 
 import (
 	"errors"
-	"github.com/jh2wnemwx/rd-linkforge/internal/base62"
+	"fmt"
 	"net/url"
 	"time"
+
+	"github.com/jh2wnemwx/rd-linkforge/internal/base62"
 )
 
 var (
 	ErrEmptyTarget       = errors.New("link: empty target")
 	ErrUnsupportedScheme = errors.New("link: unsupported scheme")
+	ErrNotFound          = errors.New("link: not found")
+	ErrAliasTaken        = errors.New("link: alias already taken")
+	ErrInvalidAlias      = errors.New("link: invalid alias")
+	ErrReservedAlias     = errors.New("link: reserved alias")
+	ErrForbidden         = errors.New("link: forbidden")
+	ErrExpired           = errors.New("link: expired")
+	ErrInvalidExpiry     = errors.New("link: invalid expiry")
+	ErrEmptyOwner        = errors.New("link: owner is required")
+	ErrInvalidCursor     = errors.New("link: invalid cursor")
 )
+
+const (
+	DefaultPageLimit = 20
+	MaxPageLimit     = 100
+)
+
+type AliasError struct {
+	Alias string
+	Err   error
+}
+
+func (e *AliasError) Error() string {
+	return fmt.Sprintf("alias %q failed: %v", e.Alias, e.Err)
+}
+
+func (e *AliasError) Unwrap() error {
+	return e.Err
+}
 
 // Link is a shortened URL. A zero ExpiresAt means it never expires.
 type Link struct {
 	ID        uint64
 	Code      string
 	Target    string
+	OwnerID   string
 	CreatedAt time.Time
+	ExpiresAt time.Time // the zero value means: never expires
+
 }
 
 // ShortenRequest carries everything needed to create a link. An empty Alias
 // asks for a generated code.
 type ShortenRequest struct {
-	TargetURL string
+	Target    string
 	Alias     string
 	OwnerID   string
 	ExpiresAt time.Time
@@ -38,6 +69,31 @@ type Page struct {
 	Limit  int
 }
 
+func (p Page) Normalize() Page {
+	if p.Limit <= 0 {
+		p.Limit = DefaultPageLimit
+	}
+
+	if p.Limit > MaxPageLimit {
+		p.Limit = MaxPageLimit
+	}
+
+	return p
+}
+
+func (p Page) AfterID() (uint64, error) {
+	if p.Cursor == "" {
+		return 0, nil
+	}
+
+	id, err := base62.Decode(p.Cursor)
+
+	if err != nil {
+		return 0, fmt.Errorf("failed to decode cursor %q: %w", p.Cursor, ErrInvalidCursor)
+	}
+
+	return id, nil
+}
 
 // New builds a link, validating the target address.
 func New(id uint64, target string) (Link, error) {
