@@ -6,24 +6,52 @@ The design is specified in the project TDD; this repository is the skeleton it d
 
 ## Current state
 
-**Skeleton only.** Every seam in the architecture exists as an interface with a Null Object implementation that satisfies it and does nothing. Nothing is wired together and no behaviour is implemented yet — each milestone replaces one set of `Noop*` types with real ones.
+**M1–M2 implemented; the rest is skeleton.** Every seam in the architecture exists as an interface with a Null Object implementation that satisfies it and does nothing; each milestone replaces one set of `Noop*` types with real ones. So far the base62 codec, the in-memory link store and the `Shortener` service (`link.Service`) are real, and `linkforged` wires them together as a small demo. Everything else is still a `Noop*`.
 
 Each file declares exactly one interface alongside its no-op implementation, so the compile-time contract and its placeholder stay together. Types shared by several interfaces live in the package's `model.go`.
+
+## The Shortener
+
+`link.Service` (in `internal/link`) is the first real implementation of `link.Shortener`, the domain service every transport sits in front of. It works against any `link.Store`; `internal/store` provides an in-memory one.
+
+- **Shorten** validates the target (`http`/`https` only), the owner and the expiry, then stores the link under either a custom alias (3–32 chars of `[A-Za-z0-9_-]`, reserved words such as `api` and `admin` rejected) or a generated 6-character base62 code.
+- **Resolve** looks a code up and returns `ErrExpired` once the link's expiry has passed.
+- **List** returns an owner's links, cursor-paginated (default 20, max 100 per page).
+- **Delete** removes a link, but only for its owner (`ErrForbidden` otherwise).
+
+Try it from the command line — `linkforged` shortens every URL it is given and prints the result:
+
+```bash
+go run ./cmd/linkforged https://example.com https://go.dev
+```
+
+## Running the tests
+
+```bash
+go test ./...                  # application module
+go test -race ./...            # same, with the race detector
+go test ./internal/link/...    # just the Shortener
+cd pkg && go test ./...        # the separate pkg/ module isn't covered by the root ./...
+```
+
+`make test` runs both modules with `-race`.
 
 ## Layout
 
 ```
-cmd/      linkforged        service binary — prints its version, nothing more
+cmd/      linkforged        service binary — for now a demo: shortens its URL args and lists them
           linkctl           operator CLI   — prints its version, nothing more
 
 pkg/                        reusable libraries — a separate Go module
-  shortid/  Codec           base62 encode/decode                       M1
+  shortid/  Codec           unused stub — base62 lives in internal/base62
             Generator       collision-resistant code issuing           M4
   cache/    Cache[K,V]      bounded cache on the redirect hot path     M4
 
 internal/                   application code
   link/     Store           link persistence, declared by its consumer M1 / M7
             Shortener       the domain service behind every transport  M2
+  store/    Store           in-memory link.Store implementation        M1
+  base62/                   base62 encode/decode used for link codes   M1
   click/    Ingester        non-blocking submission from the hot path  M5
             Store           append-only raw event persistence          M7
             Aggregator      time series and top-N queries              M5
