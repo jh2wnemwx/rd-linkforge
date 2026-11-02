@@ -42,6 +42,10 @@ func NewService(store Store, opts ...Option) *Service {
 }
 
 func (s *Service) Shorten(ctx context.Context, req ShortenRequest) (Link, error) {
+	if err := ctx.Err(); err != nil {
+		return Link{}, err
+	}
+	
 	now := s.clock()
 
 	if req.OwnerID == "" {
@@ -125,6 +129,10 @@ func validateAlias(s string) error {
 }
 
 func (s *Service) Resolve(ctx context.Context, code string) (Link, error) {
+	if err := ctx.Err(); err != nil {
+		return Link{}, err
+	}
+
 	now := s.clock()
 	l, err := s.store.ByCode(ctx, code)
 
@@ -140,6 +148,10 @@ func (s *Service) Resolve(ctx context.Context, code string) (Link, error) {
 }
 
 func (s *Service) List(ctx context.Context, ownerID string, page Page) ([]Link, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
 	if ownerID == "" {
 		return nil, ErrEmptyOwner
 	}
@@ -148,6 +160,10 @@ func (s *Service) List(ctx context.Context, ownerID string, page Page) ([]Link, 
 }
 
 func (s *Service) Delete(ctx context.Context, ownerID string, code string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	if ownerID == "" {
 		return ErrEmptyOwner
 	}
