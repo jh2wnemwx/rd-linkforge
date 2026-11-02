@@ -27,6 +27,12 @@ func WithClock(now func() time.Time) Option {
 	}
 }
 
+func WithFirstID(id uint64) Option {
+	return func(s *Service) {
+		s.nextID = id
+	}
+}
+
 func NewService(store Store, opts ...Option) *Service {
 	s := &Service{
 		store:  store,
@@ -45,19 +51,22 @@ func (s *Service) Shorten(ctx context.Context, req ShortenRequest) (Link, error)
 	if err := ctx.Err(); err != nil {
 		return Link{}, err
 	}
-	
+
 	now := s.clock()
 
 	if req.OwnerID == "" {
 		return Link{}, ErrEmptyOwner
 	}
+
 	l, err := New(s.nextID, req.Target)
 	if err != nil {
 		return l, err
 	}
+
 	if !req.ExpiresAt.IsZero() && !req.ExpiresAt.After(now) {
 		return Link{}, ErrInvalidExpiry
 	}
+
 	if req.Alias != "" {
 		if err := validateAlias(req.Alias); err != nil {
 			return Link{}, &AliasError{req.Alias, err}
