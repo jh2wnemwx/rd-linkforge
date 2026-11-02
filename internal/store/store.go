@@ -52,6 +52,10 @@ func Add(s *Store, l link.Link) error {
 
 // ErrDuplicateID if the id is taken
 func (s *Store) Create(ctx context.Context, l link.Link) (link.Link, error) {
+	if err := ctx.Err(); err != nil {
+		return link.Link{}, err
+	}
+
 	if _, ok := s.byID[l.ID]; ok {
 		return link.Link{}, ErrDuplicateID
 	}
@@ -67,6 +71,10 @@ func (s *Store) Create(ctx context.Context, l link.Link) (link.Link, error) {
 }
 
 func (s *Store) ByCode(ctx context.Context, code string) (link.Link, error) {
+	if err := ctx.Err(); err != nil {
+		return link.Link{}, err
+	}
+
 	id, ok := s.byCode[code]
 	if !ok {
 		return link.Link{}, link.ErrNotFound
@@ -82,6 +90,10 @@ func (s *Store) ByCode(ctx context.Context, code string) (link.Link, error) {
 }
 
 func (s *Store) ListByOwner(ctx context.Context, ownerID string, page link.Page) ([]link.Link, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
 	p := page.Normalize()
 	ids, exists := s.byOwner[ownerID]
 	if !exists {
@@ -121,6 +133,10 @@ func (s *Store) ListByOwner(ctx context.Context, ownerID string, page link.Page)
 }
 
 func (s *Store) Delete(ctx context.Context, id uint64) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	_, ok := s.byID[id]
 	if !ok {
 		return link.ErrNotFound
