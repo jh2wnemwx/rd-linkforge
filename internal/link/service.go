@@ -27,6 +27,12 @@ func WithClock(now func() time.Time) Option {
 	}
 }
 
+func WithFirstID(id uint64) Option {
+	return func(s *Service) {
+		s.nextID = id
+	}
+}
+
 func NewService(store Store, opts ...Option) *Service {
 	s := &Service{
 		store:  store,
@@ -42,18 +48,25 @@ func NewService(store Store, opts ...Option) *Service {
 }
 
 func (s *Service) Shorten(ctx context.Context, req ShortenRequest) (Link, error) {
+	if err := ctx.Err(); err != nil {
+		return Link{}, err
+	}
+
 	now := s.clock()
 
 	if req.OwnerID == "" {
 		return Link{}, ErrEmptyOwner
 	}
+
 	l, err := New(s.nextID, req.Target)
 	if err != nil {
 		return l, err
 	}
+
 	if !req.ExpiresAt.IsZero() && !req.ExpiresAt.After(now) {
 		return Link{}, ErrInvalidExpiry
 	}
+
 	if req.Alias != "" {
 		if err := validateAlias(req.Alias); err != nil {
 			return Link{}, &AliasError{req.Alias, err}
@@ -125,6 +138,10 @@ func validateAlias(s string) error {
 }
 
 func (s *Service) Resolve(ctx context.Context, code string) (Link, error) {
+	if err := ctx.Err(); err != nil {
+		return Link{}, err
+	}
+
 	now := s.clock()
 	l, err := s.store.ByCode(ctx, code)
 
@@ -140,6 +157,10 @@ func (s *Service) Resolve(ctx context.Context, code string) (Link, error) {
 }
 
 func (s *Service) List(ctx context.Context, ownerID string, page Page) ([]Link, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
 	if ownerID == "" {
 		return nil, ErrEmptyOwner
 	}
@@ -148,6 +169,10 @@ func (s *Service) List(ctx context.Context, ownerID string, page Page) ([]Link, 
 }
 
 func (s *Service) Delete(ctx context.Context, ownerID string, code string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	if ownerID == "" {
 		return ErrEmptyOwner
 	}
