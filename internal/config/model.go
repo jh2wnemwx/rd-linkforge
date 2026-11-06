@@ -3,7 +3,14 @@
 package config
 
 import (
+	"errors"
 	"log/slog"
+	"os"
+)
+
+var (
+	ErrMissing = errors.New("config: required variable is not set")
+	ErrInvalid = errors.New("config: invalid value")
 )
 
 // Config is the fully resolved runtime configuration.
