@@ -24,3 +24,16 @@ type Config struct {
 	CacheSize int
 	LogLevel  slog.Level
 }
+
+type EnvLoader struct {
+	lookup func(key string) (value string, ok bool)
+}
+
+func NewEnvLoader(lookup func(key string) (value string, ok bool)) *EnvLoader {
+	if lookup == nil {
+		lookup = os.LookupEnv
+	}
+	return &EnvLoader{
+		lookup: lookup,
+	}
+}
