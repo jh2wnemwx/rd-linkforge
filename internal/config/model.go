@@ -34,6 +34,8 @@ type EnvLoader struct {
 	lookup func(key string) (value string, ok bool)
 }
 
+var _ Loader = (*EnvLoader)(nil)
+
 func NewEnvLoader(lookup func(key string) (value string, ok bool)) *EnvLoader {
 	if lookup == nil {
 		lookup = os.LookupEnv
@@ -158,4 +160,16 @@ func validateAddr(key, val string) error {
 	return nil
 }
 
-var _ Loader = (*EnvLoader)(nil)
+// LogValue implements slog.LogValuer. The credentials are shown as "[redacted]".
+func (c Config) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("http_addr", c.HTTPAddr),
+		slog.String("admin_addr", c.AdminAddr),
+		slog.String("tcp_addr", c.TCPAddr),
+		slog.String("pg_dsn", "[redacted]"),
+		slog.String("mongo_uri", "[redacted]"),
+		slog.String("jwt_secret", "[redacted]"),
+		slog.Int("cache_size", c.CacheSize),
+		slog.Any("log_level", c.LogLevel),
+	)
+}
