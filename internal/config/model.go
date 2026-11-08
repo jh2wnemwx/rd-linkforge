@@ -3,9 +3,14 @@
 package config
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"log/slog"
+	"net"
 	"os"
+	"strconv"
+	"strings"
 )
 
 var (
@@ -37,3 +42,120 @@ func NewEnvLoader(lookup func(key string) (value string, ok bool)) *EnvLoader {
 		lookup: lookup,
 	}
 }
+
+func (l *EnvLoader) Load(ctx context.Context) (Config, error) {
+	if err := ctx.Err(); err != nil {
+		return Config{}, err
+	}
+
+	var errs []error
+	cfg := Config{}
+
+	// Helper for address fields with defaults
+	loadAddr := func(key, defVal string) string {
+		v, ok := l.lookup(key)
+		v = strings.TrimSpace(v)
+		if !ok || v == "" {
+			v = defVal
+		}
+
+		if err := validateAddr(key, v); err != nil {
+			errs = append(errs, err)
+		}
+
+		return v
+	}
+
+	cfg.HTTPAddr = loadAddr("LF_HTTP_ADDR", ":8080")
+	cfg.AdminAddr = loadAddr("LF_ADMIN_ADDR", "127.0.0.1:6060")
+	cfg.TCPAddr = loadAddr("LF_TCP_ADDR", ":7070")
+
+	// Helper for required strings (PGDSN, MongoURI)
+	loadRequired := func(key string) string {
+		v, ok := l.lookup(key)
+		v = strings.TrimSpace(v)
+
+		if !ok || v == "" {
+			errs = append(errs, fmt.Errorf("%v: %w", key, ErrMissing))
+			return ""
+		}
+
+		if key == "LF_JWT_SECRET" && len(v) < 32 {
+			errs = append(errs, fmt.Errorf("%v: %w", key, ErrInvalid))
+			return ""
+		}
+
+		return v
+	}
+
+	cfg.PGDSN = loadRequired("LF_PG_DSN")
+	cfg.MongoURI = loadRequired("LF_MONGO_URI")
+	cfg.JWTSecret = loadRequired("LF_JWT_SECRET")
+
+	cacheVal, cacheOk := l.lookup("LF_CACHE_SIZE")
+	cacheVal = strings.TrimSpace(cacheVal)
+	if !cacheOk || cacheVal == "" {
+		cfg.CacheSize = 100000
+	} else {
+		n, err := strconv.Atoi(cacheVal)
+		if err != nil || n <= 0 {
+			errs = append(errs, fmt.Errorf("LF_CACHE_SIZE: %w", ErrInvalid))
+		} else {
+			cfg.CacheSize = n
+		}
+	}
+
+	logVal, logOk := l.lookup("LF_LOG_LEVEL")
+	logVal = strings.TrimSpace(logVal)
+	if !logOk || logVal == "" {
+		cfg.LogLevel = slog.LevelInfo
+	} else {
+		lvl, err := parseLogLevel(logVal)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("LF_LOG_LEVEL: %w", err))
+		} else {
+			cfg.LogLevel = lvl
+		}
+	}
+
+	if len(errs) > 0 {
+		return Config{}, errors.Join(errs...)
+	}
+
+	return cfg, nil
+}
+
+func parseLogLevel(s string) (slog.Level, error) {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "debug":
+		return slog.LevelDebug, nil
+	case "info":
+		return slog.LevelInfo, nil
+	case "warn":
+		return slog.LevelWarn, nil
+	case "error":
+		return slog.LevelError, nil
+	default:
+		return 0, fmt.Errorf("%w", ErrInvalid)
+	}
+}
+
+func validateAddr(key, val string) error {
+	addrStr, portStr, err := net.SplitHostPort(val)
+	if err != nil {
+		return fmt.Errorf("%v: %w", key, ErrInvalid)
+	}
+
+	if addrStr == "" {
+		return fmt.Errorf("%v: %w", key, ErrInvalid)
+	}
+
+	port, err := strconv.Atoi(portStr)
+	if err != nil || port < 1 || port > 65535 {
+		return fmt.Errorf("%v: %w", key, ErrInvalid)
+	}
+
+	return nil
+}
+
+var _ Loader = (*EnvLoader)(nil)
