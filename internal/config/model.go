@@ -109,10 +109,10 @@ func (l *EnvLoader) Load(ctx context.Context) (Config, error) {
 
 	logVal, logOk := l.lookup("LF_LOG_LEVEL")
 	logVal = strings.TrimSpace(logVal)
-	if !logOk || logVal == "" {
+	if !logOk {
 		cfg.LogLevel = slog.LevelInfo
 	} else {
-		lvl, err := parseLogLevel(logVal)
+		lvl, err := ParseLevel(logVal)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("LF_LOG_LEVEL: %w", err))
 		} else {
@@ -127,11 +127,11 @@ func (l *EnvLoader) Load(ctx context.Context) (Config, error) {
 	return cfg, nil
 }
 
-func parseLogLevel(s string) (slog.Level, error) {
+func ParseLevel(s string) (slog.Level, error) {
 	switch strings.ToLower(strings.TrimSpace(s)) {
 	case "debug":
 		return slog.LevelDebug, nil
-	case "info":
+	case "info", "":
 		return slog.LevelInfo, nil
 	case "warn":
 		return slog.LevelWarn, nil
