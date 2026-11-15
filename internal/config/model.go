@@ -143,12 +143,8 @@ func ParseLevel(s string) (slog.Level, error) {
 }
 
 func validateAddr(key, val string) error {
-	addrStr, portStr, err := net.SplitHostPort(val)
+	_, portStr, err := net.SplitHostPort(val)
 	if err != nil {
-		return fmt.Errorf("%v: %w", key, ErrInvalid)
-	}
-
-	if addrStr == "" {
 		return fmt.Errorf("%v: %w", key, ErrInvalid)
 	}
 
