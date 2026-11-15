@@ -25,6 +25,54 @@ Try it from the command line — `linkforged` shortens every URL it is given and
 go run ./cmd/linkforged https://example.com https://go.dev
 ```
 
+## linkctl
+
+`linkctl` is the operator CLI. It keeps links in a JSON Lines database file.
+
+| Command | What it does |
+|---|---|
+| `linkctl import -in FILE -db FILE` | shortens every target in a text file (one URL per line; blank lines and `#` comments are ignored) for the owner `cli`, and adds the links to the database. A second import continues the numbering. |
+| `linkctl export -db FILE [-out FILE]` | writes the database as CSV to `-out`, or to stdout |
+| `linkctl config` | loads the configuration from the environment and checks it |
+| `linkctl version` | prints the version |
+
+Results go to stdout; logs, errors and usage go to stderr. Exit codes: `0` success, `1` the command ran and failed (including an import that skipped a target), `2` wrong usage.
+
+Import a list of URLs, then export it:
+
+```console
+$ cat targets.txt
+# links to shorten
+https://example.com
+https://go.dev/doc/
+
+$ go run ./cmd/linkctl import -in targets.txt -db links.jsonl
+imported: 2
+skipped: 0
+
+$ go run ./cmd/linkctl export -db links.jsonl
+id,code,target,owner_id,created_at,expires_at
+1,000001,https://example.com,cli,2026-11-15T18:22:47Z,
+2,000002,https://go.dev/doc/,cli,2026-11-15T18:22:47Z,
+```
+
+## Configuration
+
+Configuration comes only from the environment. Values are trimmed of surrounding spaces, and a blank value counts as unset. `linkctl config` reports every problem at once.
+
+| Variable | Default | Rule |
+|---|---|---|
+| `LF_HTTP_ADDR` | `:8080` | `host:port`, port 1–65535; an empty host means all interfaces |
+| `LF_ADMIN_ADDR` | `127.0.0.1:6060` | same as above |
+| `LF_TCP_ADDR` | `:7070` | same as above |
+| `LF_PG_DSN` | — | required |
+| `LF_MONGO_URI` | — | required |
+| `LF_JWT_SECRET` | — | required, at least 32 bytes |
+| `LF_CACHE_SIZE` | `100000` | integer greater than 0 |
+| `LF_LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error` (case-insensitive) |
+
+`LF_PG_DSN`, `LF_MONGO_URI` and `LF_JWT_SECRET` are shown as `[redacted]` whenever the configuration is logged.
+
 ## Running the tests
 
 ```bash
@@ -40,7 +88,7 @@ cd pkg && go test ./...        # the separate pkg/ module isn't covered by the r
 
 ```
 cmd/      linkforged        service binary — for now a demo: shortens its URL args and lists them
-          linkctl           operator CLI   — prints its version, nothing more
+          linkctl           operator CLI   — import / export links, check config
 
 pkg/                        reusable libraries — a separate Go module
   shortid/  Codec           unused stub — base62 lives in internal/base62
