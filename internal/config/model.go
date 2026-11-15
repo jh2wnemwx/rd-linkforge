@@ -83,7 +83,7 @@ func (l *EnvLoader) Load(ctx context.Context) (Config, error) {
 		}
 
 		if key == "LF_JWT_SECRET" && len(v) < 32 {
-			errs = append(errs, fmt.Errorf("%v: %w", key, ErrInvalid))
+			errs = append(errs, fmt.Errorf("%v: %w (expected at least 32 bytes)", key, ErrInvalid))
 			return ""
 		}
 
