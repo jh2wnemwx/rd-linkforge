@@ -22,7 +22,17 @@ type entry[K comparable, V any] struct {
 var _ Cache[string, int] = (*LRU[string, int])(nil)
 
 // NewLRU returns ErrInvalidCapacity when capacity is zero or negative.
-func NewLRU[K comparable, V any](capacity int) (*LRU[K, V], error)
+func NewLRU[K comparable, V any](capacity int) (*LRU[K, V], error) {
+	if capacity < 0 {
+		return nil, ErrInvalidCapacity
+	}
+
+	return &LRU[K, V] {
+		capacity: capacity,
+		order: list.New(),
+		items: make(map[K]*list.Element),
+	}, nil
+}
 
 func (c *LRU[K, V]) Get(key K) (V, bool)
 func (c *LRU[K, V]) Put(key K, value V)
