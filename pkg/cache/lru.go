@@ -14,6 +14,11 @@ type LRU[K comparable, V any] struct {
 	items map[K]*list.Element
 }
 
+type entry[K comparable, V any] struct {
+	key K
+	value V
+}
+
 var _ Cache[string, int] = (*LRU[string, int])(nil)
 
 // NewLRU returns ErrInvalidCapacity when capacity is zero or negative.
