@@ -49,7 +49,25 @@ func (c *LRU[K, V]) Get(key K) (V, bool) {
 	return e.Value.(*entry[K, V]).value, true
 }
 
-func (c *LRU[K, V]) Put(key K, value V)
+func (c *LRU[K, V]) Put(key K, value V) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if e, ok := c.items[key]; ok {
+		e.Value.(*entry[K, V]).value = value
+		c.order.MoveToFront(e)
+		return
+	}
+
+	if c.order.Len() >= c.capacity {
+		oldest := c.order.Back()
+		c.order.Remove(oldest)
+		delete(c.items, oldest.Value.(*entry[K, V]).key)
+	}
+
+	c.items[key] = c.order.PushFront(&entry[K, V]{key: key, value: value})
+}
+
 func (c *LRU[K, V]) Delete(key K)
 func (c *LRU[K, V]) Len() int
 
