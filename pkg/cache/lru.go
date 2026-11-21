@@ -78,7 +78,12 @@ func (c *LRU[K, V]) Delete(key K) {
 	}
 }
 
-func (c *LRU[K, V]) Len() int
+func (c *LRU[K, V]) Len() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return c.order.Len()
+}
 
 // Keys returns the keys from the most recently used to the least recently used.
 // It does not change the order.
