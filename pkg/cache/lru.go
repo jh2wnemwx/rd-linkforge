@@ -82,4 +82,14 @@ func (c *LRU[K, V]) Len() int
 
 // Keys returns the keys from the most recently used to the least recently used.
 // It does not change the order.
-func (c *LRU[K, V]) Keys() []K
+func (c *LRU[K, V]) Keys() []K {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	keys := make([]K, 0, c.order.Len())
+	for e := c.order.Front(); e != nil; e.Next() {
+		keys = append(keys, e.Value.(*entry[K, V]).key)
+	}
+
+	return keys
+}
