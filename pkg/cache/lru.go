@@ -33,9 +33,22 @@ func NewLRU[K comparable, V any](capacity int) (*LRU[K, V], error) {
 		order: list.New(),
 		items: make(map[K]*list.Element),
 	}, nil
+}	
+
+func (c *LRU[K, V]) Get(key K) (V, bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	e, ok := c.items[key]
+	if !ok {
+		var zero V
+		return zero, false 
+	}
+
+	c.order.MoveToFront(e)
+	return e.Value.(*entry[K, V]).value, true
 }
 
-func (c *LRU[K, V]) Get(key K) (V, bool)
 func (c *LRU[K, V]) Put(key K, value V)
 func (c *LRU[K, V]) Delete(key K)
 func (c *LRU[K, V]) Len() int
