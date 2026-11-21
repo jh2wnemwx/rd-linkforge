@@ -68,7 +68,16 @@ func (c *LRU[K, V]) Put(key K, value V) {
 	c.items[key] = c.order.PushFront(&entry[K, V]{key: key, value: value})
 }
 
-func (c *LRU[K, V]) Delete(key K)
+func (c *LRU[K, V]) Delete(key K) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if e, ok := c.items[key]; ok {
+		c.order.Remove(e)
+		delete(c.items, key)
+	}
+}
+
 func (c *LRU[K, V]) Len() int
 
 // Keys returns the keys from the most recently used to the least recently used.
