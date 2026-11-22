@@ -6,7 +6,13 @@ The design is specified in the project TDD; this repository is the skeleton it d
 
 ## Current state
 
-**M1–M2 implemented; the rest is skeleton.** Every seam in the architecture exists as an interface with a Null Object implementation that satisfies it and does nothing; each milestone replaces one set of `Noop*` types with real ones. So far the base62 codec, the in-memory link store and the `Shortener` service (`link.Service`) are real, and `linkforged` wires them together as a small demo. Everything else is still a `Noop*`.
+**M1–M4 implemented; the rest is skeleton.** Every seam in the architecture exists as an interface with a Null Object implementation that satisfies it and does nothing; each milestone adds real implementations next to them. So far these are real:
+
+- **M1–M2:** the base62 codec, the in-memory link store and the `Shortener` service (`link.Service`). `linkforged` wires them together as a small demo.
+- **M3:** environment configuration (`config.EnvLoader`), JSON Lines and CSV link files (`internal/linkio`) and the `linkctl` operator CLI.
+- **M4:** in `pkg/`, an LRU cache (`cache.LRU`), a trie for alias autocomplete (`trie.Trie`), a top-K heap (`topk.TopK`) and a short-code generator (`shortid.CodeGenerator`). `link.Service` can take a cache through the `WithCache` option, and `*cache.LRU[string, link.Link]` satisfies it. `linkforged` doesn't use these yet.
+
+Everything else is still a `Noop*`.
 
 Each file declares exactly one interface alongside its no-op implementation, so the compile-time contract and its placeholder stay together. Types shared by several interfaces live in the package's `model.go`.
 
