@@ -86,14 +86,14 @@ func WriteLinks(w io.Writer, links []link.Link) error {
 // Times are RFC 3339 in UTC; a link that never expires has an empty expires_at.
 func WriteCSV(w io.Writer, links []link.Link) error {
 	cw := csv.NewWriter(w)
-	
+
 	var csvHeader = []string{"id", "code", "target", "owner_id", "created_at", "expires_at"}
 	if err := cw.Write(csvHeader); err != nil {
 		return fmt.Errorf("linkio: write csv header: %w", err)
 	}
 
 	for i, l := range links {
-		row := []string {
+		row := []string{
 			strconv.FormatUint(l.ID, 10),
 			l.Code,
 			l.Target,
@@ -105,7 +105,7 @@ func WriteCSV(w io.Writer, links []link.Link) error {
 			return fmt.Errorf("linkio: write csv row %v: %w", i+1, err)
 		}
 	}
-	
+
 	cw.Flush()
 	if err := cw.Error(); err != nil {
 		return fmt.Errorf("linkio: write csv: %w", err)
