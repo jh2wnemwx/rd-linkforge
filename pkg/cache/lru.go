@@ -9,14 +9,14 @@ import (
 var ErrInvalidCapacity = errors.New("cache: capacity must be positive")
 
 type LRU[K comparable, V any] struct {
-	mu sync.Mutex
+	mu       sync.Mutex
 	capacity int
-	order *list.List
-	items map[K]*list.Element
+	order    *list.List
+	items    map[K]*list.Element
 }
 
 type entry[K comparable, V any] struct {
-	key K
+	key   K
 	value V
 }
 
@@ -28,12 +28,12 @@ func NewLRU[K comparable, V any](capacity int) (*LRU[K, V], error) {
 		return nil, ErrInvalidCapacity
 	}
 
-	return &LRU[K, V] {
+	return &LRU[K, V]{
 		capacity: capacity,
-		order: list.New(),
-		items: make(map[K]*list.Element),
+		order:    list.New(),
+		items:    make(map[K]*list.Element),
 	}, nil
-}	
+}
 
 func (c *LRU[K, V]) Get(key K) (V, bool) {
 	c.mu.Lock()
@@ -42,7 +42,7 @@ func (c *LRU[K, V]) Get(key K) (V, bool) {
 	e, ok := c.items[key]
 	if !ok {
 		var zero V
-		return zero, false 
+		return zero, false
 	}
 
 	c.order.MoveToFront(e)
