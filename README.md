@@ -6,7 +6,13 @@ The design is specified in the project TDD; this repository is the skeleton it d
 
 ## Current state
 
-**M1–M2 implemented; the rest is skeleton.** Every seam in the architecture exists as an interface with a Null Object implementation that satisfies it and does nothing; each milestone replaces one set of `Noop*` types with real ones. So far the base62 codec, the in-memory link store and the `Shortener` service (`link.Service`) are real, and `linkforged` wires them together as a small demo. Everything else is still a `Noop*`.
+**M1–M4 implemented; the rest is skeleton.** Every seam in the architecture exists as an interface with a Null Object implementation that satisfies it and does nothing; each milestone adds real implementations next to them. So far these are real:
+
+- **M1–M2:** the base62 codec, the in-memory link store and the `Shortener` service (`link.Service`). `linkforged` wires them together as a small demo.
+- **M3:** environment configuration (`config.EnvLoader`), JSON Lines and CSV link files (`internal/linkio`) and the `linkctl` operator CLI.
+- **M4:** in `pkg/`, an LRU cache (`cache.LRU`), a trie for alias autocomplete (`trie.Trie`), a top-K heap (`topk.TopK`) and a short-code generator (`shortid.CodeGenerator`). `link.Service` can take a cache through the `WithCache` option, and `*cache.LRU[string, link.Link]` satisfies it. `linkforged` doesn't use these yet.
+
+Everything else is still a `Noop*`.
 
 Each file declares exactly one interface alongside its no-op implementation, so the compile-time contract and its placeholder stay together. Types shared by several interfaces live in the package's `model.go`.
 
@@ -84,6 +90,55 @@ cd pkg && go test ./...        # the separate pkg/ module isn't covered by the r
 
 `make test` runs both modules with `-race`.
 
+## Complexity
+
+n is the number of stored items, L the length of the word or prefix, k the number of words returned, m the length of the longest returned word, and N the size of the top-K heap.
+
+| Structure | Operation | Average | Worst case |
+|---|---|---|---|
+| LRU | `Get` | O(1) | O(n) |
+| LRU | `Put` | O(1) | O(n) |
+| trie | `Insert` | O(L) | O(L) |
+| trie | `WithPrefix` | O(L + k) | O(L + k·m) |
+| topk | `Add` | O(log N) | O(log N) |
+| topk | `Result` | O(N log N) | O(N log N) |
+
+`LRU.Get` moves the entry it finds to the front, and it is still O(1) because neither step searches or shifts anything. The map takes the key straight to its element in the list, and the doubly linked list (`container/list`) moves that element to the front by relinking a few pointers, however long the list is. The O(n) worst case comes only from the map, when every key lands in the same hash bucket.
+
+Notes on the other rows:
+- A trie operation never depends on n, only on the length of the word. Each node has 256 child slots (one per byte value), so `WithPrefix` scans 256 slots per visited node. That is a constant factor, not a term in the bound.
+- The trie never keeps a branch that leads to no word. So `WithPrefix` visits at most the nodes of the k words it returns, and m ≤ 32 because aliases are at most 32 characters.
+- `Add` is O(1) when the new item doesn't beat the worst one kept, which is the common case once the heap is full.
+
+## Benchmarks
+
+`make bench` on an Apple M3 Max with Go 1.27.3:
+
+```
+cd pkg && go test -run '^$' -bench . -benchmem ./...
+goos: darwin
+goarch: arm64
+pkg: github.com/skskuzan/rd-linkforge/pkg/cache
+cpu: Apple M3 Max
+BenchmarkLRUGetHit-16    	60614986	        18.54 ns/op	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/skskuzan/rd-linkforge/pkg/cache	1.750s
+PASS
+ok  	github.com/skskuzan/rd-linkforge/pkg/shortid	0.412s
+PASS
+ok  	github.com/skskuzan/rd-linkforge/pkg/topk	0.422s
+goos: darwin
+goarch: arm64
+pkg: github.com/skskuzan/rd-linkforge/pkg/trie
+cpu: Apple M3 Max
+BenchmarkWithPrefix/limit=10-16         	  188436	      6405 ns/op	        10.00 words/op	     576 B/op	      15 allocs/op
+BenchmarkWithPrefix/all-16              	    5829	    204173 ns/op	       277.0 words/op	   11544 B/op	     286 allocs/op
+PASS
+ok  	github.com/skskuzan/rd-linkforge/pkg/trie	2.855s
+```
+
+A cache hit makes no allocations at all, so the redirect hot path adds no work for the garbage collector. `WithPrefix` on 10 000 words makes about one allocation per word it returns (each result string) plus a few for growing the result slice, so capping it at 10 results makes it about 30× faster than returning all 277 matches.
+
 ## Layout
 
 ```
@@ -93,7 +148,11 @@ cmd/      linkforged        service binary — for now a demo: shortens its URL 
 pkg/                        reusable libraries — a separate Go module
   shortid/  Codec           unused stub — base62 lives in internal/base62
             Generator       collision-resistant code issuing           M4
+            CodeGenerator   Generator: 19 random bits + 16-bit counter M4
   cache/    Cache[K,V]      bounded cache on the redirect hot path     M4
+            LRU[K,V]        Cache with least-recently-used eviction    M4
+  trie/     Trie            prefix tree over bytes, alias autocomplete M4
+  topk/     TopK            the N best items of a stream, bounded heap M4
 
 internal/                   application code
   link/     Store           link persistence, declared by its consumer M1 / M7

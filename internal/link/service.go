@@ -13,6 +13,7 @@ import (
 
 type Service struct {
 	store  Store
+	cache  Cache // nil means no cache
 	nextID uint64
 	clock  func() time.Time
 }
@@ -32,6 +33,13 @@ func WithFirstID(id uint64) Option {
 		if id >= 1 {
 			s.nextID = id
 		}
+	}
+}
+
+// WithCache makes Resolve look in c first and fill it after a store hit.
+func WithCache(c Cache) Option {
+	return func(s *Service) {
+		s.cache = c
 	}
 }
 
@@ -145,12 +153,12 @@ func (s *Service) Resolve(ctx context.Context, code string) (Link, error) {
 	}
 
 	now := s.clock()
-	l, err := s.store.ByCode(ctx, code)
-
+	l, err := s.lookup(ctx, code)
 	if err != nil {
 		return Link{}, fmt.Errorf("failed to resolve %q:, %w", code, err)
 	}
 
+	// A cached link is checked too, so it still expires.
 	if !l.ExpiresAt.IsZero() && !l.ExpiresAt.After(now) {
 		return Link{}, ErrExpired
 	}
@@ -196,5 +204,28 @@ func (s *Service) Delete(ctx context.Context, ownerID string, code string) error
 		return err
 	}
 
+	if s.cache != nil {
+		s.cache.Delete(code)
+	}
+
 	return nil
+}
+
+// lookup returns the link for code from the cache, or else from the store,
+// caching it on a store hit. A store error is returned and nothing is cached.
+func (s *Service) lookup(ctx context.Context, code string) (Link, error) {
+	if s.cache == nil {
+		return s.store.ByCode(ctx, code)
+	}
+
+	if l, ok := s.cache.Get(code); ok {
+		return l, nil
+	}
+
+	l, err := s.store.ByCode(ctx, code)
+	if err != nil {
+		return Link{}, err
+	}
+	s.cache.Put(code, l)
+	return l, nil
 }
