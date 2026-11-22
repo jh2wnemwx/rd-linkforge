@@ -24,7 +24,7 @@ var _ Cache[string, int] = (*LRU[string, int])(nil)
 
 // NewLRU returns ErrInvalidCapacity when capacity is zero or negative.
 func NewLRU[K comparable, V any](capacity int) (*LRU[K, V], error) {
-	if capacity < 0 {
+	if capacity <= 0 {
 		return nil, ErrInvalidCapacity
 	}
 
@@ -92,7 +92,7 @@ func (c *LRU[K, V]) Keys() []K {
 	defer c.mu.Unlock()
 
 	keys := make([]K, 0, c.order.Len())
-	for e := c.order.Front(); e != nil; e.Next() {
+	for e := c.order.Front(); e != nil; e = e.Next() {
 		keys = append(keys, e.Value.(*entry[K, V]).key)
 	}
 
